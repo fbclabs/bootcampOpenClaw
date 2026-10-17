@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PupusasClaw — Dashboard</title>
+<style>
+  :root { --bg:#0f1115; --panel:#1a1e27; --panel2:#232838; --text:#e6e9f0; --muted:#8b93a7; --accent:#f2a33c; --green:#3ecf8e; --red:#f0524f; --blue:#4da3ff; --border:#2b3245; }
+  * { box-sizing:border-box; }
+  body { margin:0; font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  header { display:flex; align-items:center; justify-content:space-between; padding:14px 22px; background:var(--panel); border-bottom:1px solid var(--border); }
+  header h1 { font-size:18px; margin:0; color:var(--accent); }
+  .keybar { display:flex; gap:8px; align-items:center; }
+  .keybar input { background:var(--panel2); border:1px solid var(--border); color:var(--text); padding:7px 10px; border-radius:6px; width:300px; }
+  .keybar button { background:var(--accent); color:#1a1207; border:none; padding:7px 14px; border-radius:6px; cursor:pointer; font-weight:600; }
+  nav { display:flex; gap:6px; padding:12px 22px 0; flex-wrap:wrap; }
+  nav button { background:var(--panel); color:var(--muted); border:1px solid var(--border); padding:8px 14px; border-radius:8px 8px 0 0; cursor:pointer; font-size:13px; }
+  nav button.active { background:var(--panel2); color:var(--text); border-bottom:2px solid var(--accent); }
+  main { padding:18px 22px; max-width:1100px; }
+  section { display:none; }
+  section.active { display:block; }
+  table { width:100%; border-collapse:collapse; background:var(--panel); border-radius:8px; overflow:hidden; }
+  th,td { padding:9px 12px; text-align:left; font-size:13px; border-bottom:1px solid var(--border); }
+  th { background:var(--panel2); color:var(--muted); font-weight:600; }
+  .low { color:var(--red); font-weight:600; }
+  .ok { color:var(--green); }
+  .card { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(200px,1fr)); gap:12px; }
+  .stat { background:var(--panel); border:1px solid var(--border); border-radius:8px; padding:14px; }
+  .stat .v { font-size:26px; font-weight:700; color:var(--accent); }
+  .stat .l { color:var(--muted); font-size:12px; }
+  .btn { background:var(--blue); color:#0a0d14; border:none; padding:6px 12px; border-radius:6px; cursor:pointer; font-weight:600; font-size:12px; }
+  .btn.danger { background:var(--red); }
+  .btn.green { background:var(--green); }
+  .form-row { display:flex; gap:8px; flex-wrap:wrap; align-items:center; margin-bottom:10px; }
+  input,select { background:var(--panel2); border:1px solid var(--border); color:var(--text); padding:7px 10px; border-radius:6px; }
+  .muted { color:var(--muted); font-size:12px; }
+  .badge { display:inline-block; padding:2px 8px; border-radius:10px; font-size:11px; font-weight:600; }
+  .b-pendiente{background:#5a5f73;color:#fff;} .b-confirmado{background:#4da3ff;color:#0a0d14;} .b-listo{background:#f2a33c;color:#1a1207;} .b-entregado{background:#3ecf8e;color:#0a0d14;} .b-cancelado{background:#f0524f;color:#fff;}
+  .error { background:rgba(240,82,79,.15); border:1px solid var(--red); color:#ffb4b2; padding:10px; border-radius:6px; margin:8px 0; }
+  #status { font-size:12px; color:var(--muted); }
+  /* ==== En vivo ==== */
+  .envivo-strip { display:flex; gap:14px; align-items:stretch; flex-wrap:wrap; margin-bottom:16px; }
+  .envivo-counter { background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 20px; min-width:150px; flex:1; }
+  .envivo-counter .v { font-size:28px; font-weight:800; color:var(--accent); }
+  .envivo-counter .l { font-size:14px; color:var(--muted); margin-top:2px; }
+  .envivo-live { display:flex; align-items:center; gap:8px; background:var(--panel); border:1px solid var(--border); border-radius:10px; padding:14px 18px; font-size:16px; color:var(--text); }
+  .envivo-live .dot { width:12px; height:12px; border-radius:50%; background:var(--green); box-shadow:0 0 8px var(--green); animation:envivo-pulse 2s infinite; }
+  @keyframes envivo-pulse { 0%,100%{opacity:1;} 50%{opacity:.35;} }
+  .envivo-body { display:flex; gap:16px; align-items:flex-start; }
+  .kanban { flex:1; display:flex; gap:12px; overflow-x:auto; padding-bottom:8px; min-width:0; }
+  .kcol { background:var(--panel); border:1px solid var(--border); border-radius:10px; min-width:236px; width:236px; display:flex; flex-direction:column; max-height:calc(100vh - 240px); flex:0 0 236px; }
+  .kcol-head { display:flex; align-items:center; gap:8px; padding:12px 14px; font-size:16px; font-weight:700; border-bottom:1px solid var(--border); }
+  .kdot { width:10px; height:10px; border-radius:50%; flex:0 0 auto; }
+  .kcount { margin-left:auto; background:var(--panel2); border-radius:10px; padding:2px 9px; font-size:13px; color:var(--muted); font-weight:600; }
+  .kcol-body { padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:10px; }
+  .kcard { background:var(--panel2); border:1px solid var(--border); border-radius:10px; padding:12px; cursor:pointer; font-size:16px; transition:transform .12s; }
+  .kcard:hover { transform:translateY(-1px); border-color:var(--accent); }
+  .kcard-top { display:flex; justify-content:space-between; align-items:center; gap:8px; margin-bottom:6px; }
+  .kcard-id { font-weight:800; color:var(--accent); font-size:16px; }
+  .kcard-hora { font-size:13px; color:var(--muted); }
+  .kcard-cliente { font-weight:600; margin-bottom:4px; font-size:16px; }
+  .kcard-items { color:var(--muted); font-size:16px; margin-bottom:8px; }
+  .kcard-bottom { display:flex; justify-content:space-between; align-items:center; }
+  .kcard-total { font-weight:700; font-size:16px; }
+  .kcard-ago { font-size:13px; color:var(--muted); }
+  .kcard.just-moved { animation:envivo-flash 2s ease; }
+  @keyframes envivo-flash { 0%{ box-shadow:0 0 0 3px var(--accent); background:#38405a; } 100%{ box-shadow:none; } }
+  .activity { width:330px; flex:0 0 330px; background:var(--panel); border:1px solid var(--border); border-radius:10px; max-height:calc(100vh - 240px); display:flex; flex-direction:column; }
+  .activity h3 { padding:12px 14px; margin:0; font-size:16px; border-bottom:1px solid var(--border); }
+  #actList { overflow-y:auto; padding:8px; }
+  .act-item { display:flex; gap:10px; padding:8px; border-radius:8px; font-size:15px; }
+  .act-item + .act-item { border-top:1px solid var(--border); }
+  .act-item.subagente { background:rgba(62,207,142,.08); border-left:3px solid var(--green); }
+  .act-icon { font-size:18px; flex:0 0 auto; }
+  .act-text { font-weight:600; }
+  .act-meta { color:var(--muted); font-size:13px; }
+  .modal { position:fixed; inset:0; background:rgba(0,0,0,.55); display:flex; align-items:center; justify-content:center; z-index:50; }
+  .modal-box { background:var(--panel); border:1px solid var(--border); border-radius:12px; width:min(520px,92vw); max-height:82vh; overflow-y:auto; }
+  .modal-head { display:flex; justify-content:space-between; align-items:center; padding:14px 18px; border-bottom:1px solid var(--border); font-size:17px; font-weight:700; }
+  #tlBody { padding:8px 18px 18px; }
+  .tl-item { position:relative; padding:12px 0 12px 28px; border-left:2px solid var(--border); margin-left:8px; }
+  .tl-item:last-child { border-left-color:transparent; }
+  .tl-dot { position:absolute; left:-7px; top:18px; width:12px; height:12px; border-radius:50%; }
+  .tl-row1 { display:flex; justify-content:space-between; gap:10px; align-items:baseline; }
+  .tl-estado { font-weight:700; font-size:16px; }
+  .tl-time { color:var(--muted); font-size:13px; }
+  .tl-actor { margin-top:4px; font-size:15px; }
+  .tl-actor-icon { margin-right:4px; }
+</style>
+</head>
+<body>
+<header>
+  <h1>🥙 PupusasClaw</h1>
+  <div class="keybar">
+    <input type="password" id="apikey" placeholder="X-API-Key" autocomplete="off">
+    <button onclick="saveKey()">Guardar clave</button>
+    <span id="status">sin conectar</span>
+  </div>
+</header>
+<nav>
+  <button data-s="resumen" class="active">Resumen</button>
+  <button data-s="productos">Productos</button>
+  <button data-s="encargos">Encargos</button>
+  <button data-s="eventos">Eventos</button>
+  <button data-s="envivo">En vivo</button>
+</nav>
+<main>
+  <div id="err"></div>
+
+  <section id="resumen" class="active">
+    <div class="grid" id="stats"></div>
+    <div class="card"><h3>Productos con stock bajo</h3><div id="bajo"></div></div>
+    <div class="card"><h3>Unidades apartadas (encargos activos)</h3><div id="apartados"></div></div>
+    <div class="card"><h3>Encargos por estado</h3><div id="porEstado"></div></div>
+  </section>
+
+  <section id="productos">
+    <div class="card">
+      <h3>Agregar producto</h3>
+      <div class="form-row">
+        <input id="p_nombre" placeholder="nombre">
+        <select id="p_cat"><option value="pupusa">pupusa</option><option value="bebida">bebida</option><option value="extra">extra</option></select>
+        <input id="p_precio" placeholder="precio" type="number" step="0.01">
+        <input id="p_stock" placeholder="stock" type="number">
+        <input id="p_min" placeholder="stock mínimo" type="number" value="5">
+        <button class="btn" onclick="crearProducto()">Crear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-row">
+        <input id="q" placeholder="buscar...">
+        <label class="muted"><input type="checkbox" id="bajo_stock"> solo stock bajo</label>
+        <button class="btn" onclick="listarProductos()">Filtrar</button>
+      </div>
+      <table><thead><tr><th>ID</th><th>Nombre</th><th>Categoría</th><th>Precio</th><th>Stock</th><th>Mínimo</th><th>Acciones</th></tr></thead><tbody id="prodBody"></tbody></table>
+    </div>
+  </section>
+
+  <section id="encargos">
+    <div class="card">
+      <h3>Nuevo encargo</h3>
+      <div class="form-row">
+        <input id="e_cliente" placeholder="cliente">
+        <input id="e_chat" placeholder="chat_id">
+        <input id="e_hora" placeholder="19:00">
+        <input id="e_items" placeholder="revuelta:4, queso:2" style="width:220px">
+        <input id="e_nota" placeholder="nota (opcional)">
+        <button class="btn" onclick="crearEncargo()">Crear</button>
+      </div>
+    </div>
+    <div class="card">
+      <div class="form-row">
+        <select id="e_estado_f"><option value="">todos</option><option>pendiente</option><option>confirmado</option><option>listo</option><option>entregado</option><option>cancelado</option></select>
+        <button class="btn" onclick="listarEncargos()">Listar</button>
+      </div>
+      <table><thead><tr><th>ID</th><th>Cliente</th><th>Chat</th><th>Hora</th><th>Estado</th><th>Total</th><th>Acciones</th></tr></thead><tbody id="encBody"></tbody></table>
+    </div>
+  </section>
+
+  <section id="eventos">
+    <div class="card">
+      <div class="form-row"><button class="btn" onclick="listarEventos()">Refrescar</button></div>
+      <table><thead><tr><th>ID</th><th>Entidad</th><th>ID</th><th>Acción</th><th>Actor</th><th>Detalle</th><th>Fecha</th></tr></thead><tbody id="evBody"></tbody></table>
+    </div>
+  </section>
+  <section id="envivo">
+    <div class="envivo-strip">
+      <div class="envivo-counter"><div class="v" id="ev_hoy">0</div><div class="l">Encargos de hoy</div></div>
+      <div class="envivo-counter"><div class="v" id="ev_pendientes">0</div><div class="l">Pendientes</div></div>
+      <div class="envivo-counter"><div class="v" id="ev_listos">0</div><div class="l">Listos para entregar</div></div>
+      <div class="envivo-counter"><div class="v" id="ev_ingresos">$0.00</div><div class="l">Ingresos del día</div></div>
+      <div class="envivo-live"><span class="dot"></span> <span>en vivo</span> <span class="muted" id="ev_live_time">—</span></div>
+    </div>
+    <div class="envivo-body">
+      <div class="kanban" id="kanban">
+        <div class="kcol" data-estado="pendiente">
+          <div class="kcol-head"><span class="kdot" style="background:#4da3ff"></span> Pendiente <span class="kcount" id="kcount_pendiente">0</span></div>
+          <div class="kcol-body" id="kbody_pendiente"></div>
+        </div>
+        <div class="kcol" data-estado="confirmado">
+          <div class="kcol-head"><span class="kdot" style="background:#f2a33c"></span> Confirmado <span class="kcount" id="kcount_confirmado">0</span></div>
+          <div class="kcol-body" id="kbody_confirmado"></div>
+        </div>
+        <div class="kcol" data-estado="listo">
+          <div class="kcol-head"><span class="kdot" style="background:#a78bfa"></span> Listo <span class="kcount" id="kcount_listo">0</span></div>
+          <div class="kcol-body" id="kbody_listo"></div>
+        </div>
+        <div class="kcol" data-estado="entregado">
+          <div class="kcol-head"><span class="kdot" style="background:#3ecf8e"></span> Entregado <span class="kcount" id="kcount_entregado">0</span></div>
+          <div class="kcol-body" id="kbody_entregado"></div>
+        </div>
+        <div class="kcol" data-estado="cancelado">
+          <div class="kcol-head"><span class="kdot" style="background:#8b93a7"></span> Cancelado <span class="kcount" id="kcount_cancelado">0</span></div>
+          <div class="kcol-body" id="kbody_cancelado"></div>
+        </div>
+      </div>
+      <aside class="activity">
+        <h3>Actividad de los agentes</h3>
+        <div id="actList"><div class="muted">Sin actividad</div></div>
+      </aside>
+    </div>
+  </section>
+
+  <div id="timelineModal" class="modal" style="display:none">
+    <div class="modal-box">
+      <div class="modal-head"><span id="tlTitle">Encargo</span><button class="btn" onclick="closeTimeline()">Cerrar</button></div>
+      <div id="tlBody"></div>
+    </div>
+  </div>
+</main>
+
+<script>
+const API = '';
+let KEY = sessionStorage.getItem('pupuclaw_key') || '';
+document.getElementById('apikey').value = KEY;
+
+function saveKey() {
+  KEY = document.getElementById('apikey').value.trim();
+  sessionStorage.setItem('pupuclaw_key', KEY);
+  setStatus('clave guardada');
+  cargarResumen();
+}
+function setStatus(t){ document.getElementById('status').textContent = t; }
+function showErr(e){ const d=document.getElementById('err'); d.innerHTML = e ? '<div class="error">'+escapeHtml(typeof e==='string'?e:JSON.stringify(e))+'</div>' : ''; }
+function escapeHtml(s){ return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c])); }
+
+async function api(method, path, body) {
+  const res = await fetch(API + path, {
+    method,
+    headers: { 'Content-Type':'application/json', 'X-API-Key': KEY, 'X-Actor':'dashboard' },
+    body: body ? JSON.stringify(body) : undefined
+  });
+  const text = await res.text();
+  let data; try { data = JSON.parse(text); } catch(e){ data = text; }
+  if (!res.ok) throw { status: res.status, data };
+  return data;
+}
+
+function fmtTime(iso){
+  if(!iso) return '';
+  const d = new Date(iso);
+  return d.toLocaleString('es-SV', { timeZone:'America/El_Salvador' });
+}
+
+// Resumen
+async function cargarResumen(){
+  try {
+    showErr('');
+    const r = await api('GET','/api/resumen');
+    const stats = document.getElementById('stats');
+    const porEstado = r.encargos_por_estado || {};
+    stats.innerHTML = [
+      stat('Valor inventario','$'+r.valor_inventario),
+      stat('Ventas hoy', r.ventas_hoy),
+      stat('Unidades vendidas hoy', r.unidades_vendidas_hoy),
+      stat('Ingresos hoy','$'+r.ingresos_hoy),
+      stat('Pendientes', porEstado.pendiente||0),
+      stat('Confirmados', porEstado.confirmado||0),
+      stat('Listos', porEstado.listo||0),
+      stat('Entregados', porEstado.entregado||0),
+    ].join('');
+    const bajo = r.stock_bajo || [];
+    document.getElementById('bajo').innerHTML = bajo.length
+      ? '<table><thead><tr><th>Producto</th><th>Stock</th><th>Mínimo</th></tr></thead><tbody>'
+        + bajo.map(p=>'<tr><td>'+escapeHtml(p.nombre)+'</td><td class="low">'+p.stock+'</td><td>'+p.stock_minimo+'</td></tr>').join('')
+        + '</tbody></table>'
+      : '<span class="muted">Nada por agotarse 👍</span>';
+    const ap = r.unidades_apartadas || {};
+    const apEntries = Object.entries(ap);
+    document.getElementById('apartados').innerHTML = apEntries.length
+      ? '<table><thead><tr><th>Producto</th><th>Apartadas</th></tr></thead><tbody>'
+        + apEntries.map(kv=>'<tr><td>'+escapeHtml(kv[0])+'</td><td>'+kv[1]+'</td></tr>').join('') + '</tbody></table>'
+      : '<span class="muted">Sin apartados activos</span>';
+    document.getElementById('porEstado').innerHTML = Object.entries(porEstado)
+      .map(kv=>'<span class="badge b-'+kv[0]+'">'+kv[0]+': '+kv[1]+'</span> ').join('');
+    setStatus('conectado');
+  } catch(e) {
+    setStatus('error');
+    showErr(e.data || e);
+  }
+}
+function stat(l,v){ return '<div class="stat"><div class="v">'+v+'</div><div class="l">'+l+'</div></div>'; }
+
+// Productos
+async function listarProductos(){
+  try { showErr('');
+    const q = document.getElementById('q').value;
+    const bajo = document.getElementById('bajo_stock').checked;
+    let path = '/api/productos?';
+    if(q) path += 'q='+encodeURIComponent(q)+'&';
+    if(bajo) path += 'bajo_stock=true';
+    const r = await api('GET', path);
+    document.getElementById('prodBody').innerHTML = r.map(p =>
+      '<tr><td>'+p.id+'</td><td>'+escapeHtml(p.nombre)+'</td><td>'+p.categoria+'</td><td>$'+p.precio+'</td>'
+      +'<td class="'+(p.stock<=p.stock_minimo?'low':'ok')+'">'+p.stock+'</td><td>'+p.stock_minimo+'</td>'
+      +'<td><button class="btn green" data-action="editar-stock" data-id="'+p.id+'" data-stock="'+p.stock+'">stock</button> '
+      +'<button class="btn danger" data-action="eliminar" data-id="'+p.id+'" data-nombre="'+escapeHtml(p.nombre)+'">eliminar</button></td></tr>'
+    ).join('');
+  } catch(e){ showErr(e.data||e); }
+}
+async function crearProducto(){
+  try { showErr('');
+    await api('POST','/api/productos',{
+      nombre:document.getElementById('p_nombre').value.trim(),
+      categoria:document.getElementById('p_cat').value,
+      precio:parseFloat(document.getElementById('p_precio').value),
+      stock:parseInt(document.getElementById('p_stock').value),
+      stock_minimo:parseInt(document.getElementById('p_min').value)
+    });
+    listarProductos();
+  } catch(e){ showErr(e.data||e); }
+}
+document.getElementById('prodBody').addEventListener('click', async function(ev){
+  const btn = ev.target.closest('button[data-action]');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  if(action === 'editar-stock'){
+    const ns = prompt('Nuevo stock para producto '+id+':', btn.dataset.stock);
+    if(ns===null) return;
+    try { await api('PATCH','/api/productos/'+id,{stock:parseInt(ns)}); listarProductos(); }
+    catch(e){ showErr(e.data||e); }
+  } else if(action === 'eliminar'){
+    const nombre = btn.dataset.nombre;
+    if(!confirm('¿Eliminar "'+nombre+'" (ID '+id+')?')) return;
+    try { await api('DELETE','/api/productos/'+id+'?confirm=true'); listarProductos(); }
+    catch(e){ showErr(e.data||e); }
+  }
+});
+
+// Encargos
+async function listarEncargos(){
+  try { showErr('');
+    const est = document.getElementById('e_estado_f').value;
+    let path = '/api/encargos?'+(est?'estado='+est:'');
+    const r = await api('GET', path);
+    document.getElementById('encBody').innerHTML = r.map(e =>
+      '<tr><td>'+e.id+'</td><td>'+escapeHtml(e.cliente)+'</td><td>'+escapeHtml(e.chat_id||'')+'</td><td>'+escapeHtml(e.hora_entrega||'')+'</td>'
+      +'<td><span class="badge b-'+e.estado+'">'+e.estado+'</span></td><td>$'+e.total+'</td>'
+      +'<td>'+accionesEncargo(e)+'</td></tr>'
+    ).join('') || '<tr><td colspan="7" class="muted">Sin encargos</td></tr>';
+  } catch(e){ showErr(e.data||e); }
+}
+function accionesEncargo(e){
+  let btns = '';
+  if(e.estado==='pendiente') btns += '<button class="btn green" data-action="estado" data-id="'+e.id+'" data-estado="confirmado">confirmar</button> ';
+  if(e.estado==='confirmado') btns += '<button class="btn" data-action="estado" data-id="'+e.id+'" data-estado="listo">listo</button> ';
+  if(e.estado==='listo') btns += '<button class="btn green" data-action="estado" data-id="'+e.id+'" data-estado="entregado">entregar</button> ';
+  if(e.estado==='pendiente'||e.estado==='confirmado') btns += '<button class="btn danger" data-action="estado" data-id="'+e.id+'" data-estado="cancelado">cancelar</button> ';
+  btns += '<button class="btn" data-action="ver" data-id="'+e.id+'">ver</button>';
+  return btns;
+}
+document.getElementById('encBody').addEventListener('click', async function(ev){
+  const btn = ev.target.closest('button[data-action]');
+  if(!btn) return;
+  const action = btn.dataset.action;
+  const id = btn.dataset.id;
+  if(action === 'estado'){
+    try { await api('PATCH','/api/encargos/'+id,{estado:btn.dataset.estado}); listarEncargos(); cargarResumen(); }
+    catch(e){ showErr(e.data||e); }
+  } else if(action === 'ver'){
+    try { showErr('');
+      const r = await api('GET','/api/encargos/'+id);
+      const items = r.items.map(i=>i.cantidad+'x '+i.producto+' ($'+i.precio_unitario+')').join(', ');
+      alert('Encargo #'+id+' - Cliente: '+r.encargo.cliente+' - Estado: '+r.encargo.estado+' - Items: '+items+' - Total: $'+r.encargo.total);
+    } catch(e){ showErr(e.data||e); }
+  }
+});
+async function crearEncargo(){
+  try { showErr('');
+    const raw = document.getElementById('e_items').value;
+    const items = raw.split(',').map(s=>s.trim()).filter(Boolean).map(s=>{
+      const parts = s.split(':');
+      return {producto:parts[0].trim(), cantidad:parseInt(parts[1])};
+    });
+    await api('POST','/api/encargos',{
+      cliente:document.getElementById('e_cliente').value.trim(),
+      chat_id:document.getElementById('e_chat').value.trim(),
+      hora_entrega:document.getElementById('e_hora').value.trim(),
+      items,
+      nota:document.getElementById('e_nota').value.trim()||null
+    });
+    listarEncargos(); cargarResumen();
+  } catch(e){ showErr(e.data||e); }
+}
+
+// Eventos
+async function listarEventos(){
+  try { showErr('');
+    const r = await api('GET','/api/eventos?limit=100');
+    document.getElementById('evBody').innerHTML = r.map(ev =>
+      '<tr><td>'+ev.id+'</td><td>'+escapeHtml(ev.entidad||'')+'</td><td>'+(ev.entidad_id||'')+'</td><td>'+escapeHtml(ev.accion)+'</td><td>'+escapeHtml(ev.actor)+'</td>'
+      +'<td class="muted">'+escapeHtml(ev.detalle||'')+'</td><td>'+fmtTime(ev.fecha)+'</td></tr>'
+    ).join('') || '<tr><td colspan="7" class="muted">Sin eventos</td></tr>';
+  } catch(e){ showErr(e.data||e); }
+}
+
+// ===== En vivo =====
+const ACTOR_META = {
+  cliente:        { icon:'💬', label:'Telegram del cliente', color:'#4da3ff' },
+  tomador_pedidos:{ icon:'💬', label:'Telegram del cliente', color:'#4da3ff' },
+  orquestador:    { icon:'🤖', label:'Agente principal', color:'#f2a33c' },
+  inventario:     { icon:'📦', label:'Subagente', color:'#3ecf8e' },
+  duena:          { icon:'👩', label:'Telegram de la dueña', color:'#ff7ab8' },
+  dashboard:      { icon:'🌐', label:'Web', color:'#8b93a7' }
+};
+const ESTADO_META = {
+  pendiente:  { color:'#4da3ff', label:'Pendiente' },
+  confirmado: { color:'#f2a33c', label:'Confirmado' },
+  listo:      { color:'#a78bfa', label:'Listo' },
+  entregado:  { color:'#3ecf8e', label:'Entregado' },
+  cancelado:  { color:'#8b93a7', label:'Cancelado' }
+};
+const KCOLS = ['pendiente','confirmado','listo','entregado','cancelado'];
+let envivoTimer = null;
+let prevEstado = {};
+let itemsCache = {};
+
+function setVal(id, v){ const el = document.getElementById(id); if(el) el.textContent = v; }
+function timeAgo(iso){
+  if(!iso) return '';
+  const diff = Date.now() - new Date(iso).getTime();
+  if(diff < 0) return 'ahora';
+  const s = Math.floor(diff/1000);
+  if(s < 60) return 'hace '+s+' s';
+  const m = Math.floor(s/60);
+  if(m < 60) return 'hace '+m+' min';
+  const h = Math.floor(m/60);
+  if(h < 24) return 'hace '+h+' h';
+  return 'hace '+Math.floor(h/24)+' d';
+}
+function esvDateKey(iso){ return new Date(iso).toLocaleDateString('en-CA', { timeZone:'America/El_Salvador' }); }
+
+function cardHtml(e){
+  const items = itemsCache[e.id] || [];
+  const itemsTxt = items.map(i => i.cantidad+' '+i.producto).join(', ');
+  const moved = (prevEstado[e.id] !== undefined && prevEstado[e.id] !== e.estado) ? ' just-moved' : '';
+  prevEstado[e.id] = e.estado;
+  const total = '$' + Number(e.total || 0).toFixed(2);
+  return '<div class="kcard'+moved+'" data-id="'+e.id+'" onclick="openTimeline('+e.id+')">'
+    + '<div class="kcard-top"><span class="kcard-id">#'+e.id+'</span>'
+    + '<span class="kcard-hora">'+escapeHtml(e.hora_entrega||'')+'</span></div>'
+    + '<div class="kcard-cliente">'+escapeHtml(e.cliente)+'</div>'
+    + '<div class="kcard-items">'+escapeHtml(itemsTxt)+'</div>'
+    + '<div class="kcard-bottom"><span class="kcard-total">'+total+'</span>'
+    + '<span class="kcard-ago">'+timeAgo(e.creado)+'</span></div>'
+    + '</div>';
+}
+function renderKanban(encargos){
+  const by = {};
+  for(const col of KCOLS) by[col] = [];
+  for(const e of encargos){ if(by[e.estado]) by[e.estado].push(e); }
+  for(const col of KCOLS){
+    const body = document.getElementById('kbody_'+col);
+    if(!body) continue;
+    setVal('kcount_'+col, by[col].length);
+    body.innerHTML = by[col].map(cardHtml).join('');
+  }
+}
+function evEstado(accion){
+  if(!accion) return 'pendiente';
+  if(accion === 'crear') return 'pendiente';
+  if(accion.indexOf('estado_') === 0) return accion.slice(7);
+  return accion;
+}
+function actText(ev){
+  const ent = ev.entidad || '';
+  const acc = ev.accion || '';
+  const id = ev.entidad_id;
+  if(ent === 'encargo'){
+    if(acc === 'crear') return 'Encargo #'+id+' creado';
+    if(acc.indexOf('estado_') === 0) return 'Encargo #'+id+' → '+acc.slice(7);
+    return 'Encargo #'+id+' '+acc;
+  }
+  if(ent === 'producto') return 'Producto '+acc+(id ? ' #'+id : '');
+  if(ent === 'venta') return 'Venta de mostrador';
+  return ent+' '+acc+(id ? ' #'+id : '');
+}
+function renderActivity(eventos){
+  const list = document.getElementById('actList');
+  if(!list) return;
+  list.innerHTML = (eventos||[]).map(ev => {
+    const m = ACTOR_META[ev.actor] || {icon:'❓', label:ev.actor||'?', color:'#8b93a7'};
+    const sub = (ev.actor === 'tomador_pedidos' || ev.actor === 'inventario') ? ' subagente' : '';
+    return '<div class="act-item'+sub+'">'
+      + '<span class="act-icon" style="color:'+m.color+'">'+m.icon+'</span>'
+      + '<div class="act-main"><div class="act-text">'+escapeHtml(actText(ev))+'</div>'
+      + '<div class="act-meta">'+escapeHtml(m.label)+' · '+timeAgo(ev.fecha)+'</div></div>'
+      + '</div>';
+  }).join('') || '<div class="muted">Sin actividad</div>';
+}
+function tlItemHtml(ev){
+  const m = ACTOR_META[ev.actor] || {icon:'❓', label:ev.actor||'?', color:'#8b93a7'};
+  const st = ESTADO_META[evEstado(ev.accion)] || {color:'#8b93a7', label:evEstado(ev.accion)};
+  return '<div class="tl-item">'
+    + '<span class="tl-dot" style="background:'+st.color+'"></span>'
+    + '<div class="tl-main">'
+    + '<div class="tl-row1"><span class="tl-estado" style="color:'+st.color+'">'+escapeHtml(st.label)+'</span>'
+    + '<span class="tl-time">'+fmtTime(ev.fecha)+'</span></div>'
+    + '<div class="tl-actor"><span class="tl-actor-icon" style="color:'+m.color+'">'+m.icon+'</span>'+escapeHtml(m.label)+'</div>'
+    + '</div></div>';
+}
+async function openTimeline(id){
+  try {
+    const d = await api('GET','/api/encargos/'+id);
+    const enc = d.encargo || {};
+    document.getElementById('tlTitle').textContent = 'Encargo #'+id+' — '+enc.cliente;
+    document.getElementById('tlBody').innerHTML = (d.eventos||[]).map(tlItemHtml).join('');
+    document.getElementById('timelineModal').style.display = 'flex';
+  } catch(e){ showErr(e.data||e); }
+}
+function closeTimeline(){ document.getElementById('timelineModal').style.display = 'none'; }
+async function pollEnVivo(){
+  try {
+    const results = await Promise.all([
+      api('GET','/api/encargos'),
+      api('GET','/api/resumen'),
+      api('GET','/api/eventos?limit=15')
+    ]);
+    const encargos = results[0] || [];
+    const resumen = results[1] || {};
+    const eventos = results[2] || [];
+    setVal('ev_ingresos', '$'+Number(resumen.ingresos_hoy||0).toFixed(2));
+    setVal('ev_pendientes', resumen.encargos_por_estado ? (resumen.encargos_por_estado.pendiente||0) : 0);
+    setVal('ev_listos', resumen.encargos_por_estado ? (resumen.encargos_por_estado.listo||0) : 0);
+    const hoyKey = esvDateKey(new Date().toISOString());
+    setVal('ev_hoy', encargos.filter(e => esvDateKey(e.creado) === hoyKey).length);
+    setVal('ev_live_time', new Date().toLocaleTimeString('es-SV', { timeZone:'America/El_Salvador' }));
+    const missing = encargos.filter(e => !(e.id in itemsCache));
+    if(missing.length){
+      await Promise.all(missing.map(async e => {
+        try { const d = await api('GET','/api/encargos/'+e.id); itemsCache[e.id] = d.items || []; }
+        catch(err){ itemsCache[e.id] = []; }
+      }));
+    }
+    renderKanban(encargos);
+    renderActivity(eventos);
+    setStatus('conectado');
+  } catch(e){ /* mantener última vista */ }
+}
+function startEnVivo(){
+  if(envivoTimer) return;
+  pollEnVivo();
+  envivoTimer = setInterval(pollEnVivo, 3000);
+}
+function stopEnVivo(){
+  if(envivoTimer){ clearInterval(envivoTimer); envivoTimer = null; }
+}
+document.getElementById('timelineModal').addEventListener('click', function(ev){ if(ev.target === this) closeTimeline(); });
+
+// Navegación
+document.querySelectorAll('nav button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));
+    document.querySelectorAll('section').forEach(x=>x.classList.remove('active'));
+    b.classList.add('active');
+    document.getElementById(b.dataset.s).classList.add('active');
+    if(b.dataset.s==='resumen') cargarResumen();
+    if(b.dataset.s==='productos') listarProductos();
+    if(b.dataset.s==='encargos') listarEncargos();
+    if(b.dataset.s==='eventos') listarEventos();
+    if(b.dataset.s==='envivo'){ startEnVivo(); } else { stopEnVivo(); }
+  });
+});
+
+if(KEY){ cargarResumen(); } else { setStatus('ingresa la clave'); }
+</script></script>
+</body>
+</html>
